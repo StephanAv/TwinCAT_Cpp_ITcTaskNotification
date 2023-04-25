@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="MAIN" Id="{914da016-b5f1-4e28-a7ea-1941688fb62f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+    fbGetCurTaskIdx  : GETCURTASKINDEX;
+    nCycleTime       : UDINT;
+	fb_cpu_cnt		 : GETCPUACCOUNT; 
+	start 			 : ULINT; // 100ns
+	now				 : ULINT; // 100ns
+	passed			 : ULINT; // 100ns
+	b_initialized 	 : BOOL;	
+	bExceed			 AT %I* : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF NOT b_initialized THEN
+	b_initialized := TRUE;
+	
+	fbGetCurTaskIdx();
+	nCycleTime := _TaskInfo[fbGetCurTaskIdx.index].CycleTime;
+END_IF
+
+IF bExceed THEN
+	bExceed := FALSE;
+	
+	fb_cpu_cnt(cpuAccountDW =>start);
+
+	REPEAT
+		fb_cpu_cnt(cpuAccountDW =>now);
+		passed := now - start;
+	UNTIL
+		passed > nCycleTime
+		//passed +10000 > nCycleTime // >> High Load
+	END_REPEAT
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="26" Count="5" />
+      <LineId Id="34" Count="12" />
+      <LineId Id="11" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
